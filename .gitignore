@@ -1,0 +1,33 @@
+node_modules/
+package-lock.json
+
+# Env & secrets
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Coverage / reports
+coverage/
+.nyc_output/
+
+# Editors / tooling
+.vscode/
+.idea/
+
+# Build artifacts
+/dist/
+/build/
+.tmp/
+
+# Docker data volume (compose)
+postgres_data/
+
+# Misc
+*.swp
+*.swo
