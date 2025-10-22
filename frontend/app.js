@@ -734,8 +734,10 @@
       const d = new Date(state.selectedDateISO); 
       const fmt = d.toLocaleDateString(state.lang==='ru'?'ru-RU':'en-GB',{ day:'2-digit', month:'2-digit', year:'numeric' }); 
       elements.selectedSlot.textContent = `${fmt} • ${state.selectedTime}`; 
+      elements.selectedSlot.classList.add('has-selection');
     } else { 
       elements.selectedSlot.textContent = i18n[state.lang].noSlot; 
+      elements.selectedSlot.classList.remove('has-selection');
       elements.submitBtn.disabled = true; 
     } 
   }

@@ -996,15 +996,19 @@ input.error{
 
 .selected-slot{
   margin:12px 0 18px; 
-  color:#fff;
-  font-weight:600;
-  font-size:15px;
-  padding:12px;
-  background:linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-  border-radius:12px;
+  color:var(--text-secondary);
+  font-weight:400;
+  font-size:14px;
+  padding:0;
+  background:transparent;
+  border:none;
   text-align:center;
   transition:all 0.3s ease;
-  box-shadow: var(--shadow-sm);
+}
+
+.selected-slot.has-selection{
+  color:var(--primary);
+  font-weight:600;
 }
 
 /* Buttons */
@@ -1021,6 +1025,10 @@ input.error{
   box-shadow: var(--shadow-md);
   position:relative;
   overflow:hidden;
+}
+
+form .primary{
+  width:100%;
 }
 
 .primary::after {
