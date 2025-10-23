@@ -3,6 +3,7 @@ const path = require('path');
 
 const AdminUser = require('./entities/AdminUser');
 const Booking = require('./entities/Booking');
+const Clinic = require('./entities/Clinic');
 
 const AppDataSource = new DataSource({
   type: 'postgres',
@@ -13,7 +14,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME || 'temp',
   synchronize: true,
   logging: false,
-  entities: [AdminUser, Booking],
+  entities: [AdminUser, Booking, Clinic],
 });
 
 module.exports = { AppDataSource };

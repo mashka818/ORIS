@@ -9,12 +9,21 @@ module.exports = new EntitySchema({
     time: { type: String }, // HH:MM
     name: { type: String },
     phone: { type: String },
+    clinicId: { type: Number },
     status: { type: String, default: 'active' }, // active | cancelled
     createdAt: { type: 'timestamp', createDate: true },
     updatedAt: { type: 'timestamp', updateDate: true },
   },
+  relations: {
+    clinic: {
+      type: 'many-to-one',
+      target: 'Clinic',
+      joinColumn: { name: 'clinicId' },
+      nullable: false,
+    },
+  },
   indices: [
-    { name: 'idx_booking_date_time', columns: ['date', 'time'] },
+    { name: 'idx_booking_date_time_clinic', columns: ['date', 'time', 'clinicId'] },
   ],
 });
 

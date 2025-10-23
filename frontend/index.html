@@ -19,6 +19,8 @@
             <div class="select-items select-hide">
               <div data-value="ru">RU</div>
               <div data-value="en">EN</div>
+              <div data-value="uz">UZ</div>
+              <div data-value="tj">TJ</div>
             </div>
           </div>
           <label class="theme-switch" aria-label="Переключить тему">
@@ -40,7 +42,7 @@
     <section id="welcomeSection" class="welcome-section">
       <div class="container welcome-content">
         <h1 class="welcome-title" data-i18n="welcomeTitle">Добро пожаловать!</h1>
-        <p class="welcome-text" data-i18n="welcomeText">Воспользуйтесь нашим сервисом онлайн-записи. Выберите удобную дату и время для посещения.</p>
+        <p class="welcome-text" data-i18n="welcomeText">Запишитесь на медицинский осмотр</p>
         <button class="primary large" id="startBooking" data-i18n="startBooking">Начать запись</button>
       </div>
     </section>
@@ -71,6 +73,16 @@
         <h2 data-i18n="formTitle">Запись на прием</h2>
         <form id="bookingForm">
           <div class="input-row">
+            <label data-i18n="clinic">Выберите клинику</label>
+            <div class="custom-select clinic-select" id="customClinicSelect">
+              <div class="select-selected" data-i18n="selectClinic">Выберите клинику</div>
+              <div class="select-items select-hide" id="clinicSelectItems">
+                <!-- Клиники будут загружены динамически -->
+              </div>
+            </div>
+            <span class="error-msg" id="clinicError"></span>
+          </div>
+          <div class="input-row">
             <label for="name" data-i18n="name">Имя</label>
             <input id="name" name="name" type="text" placeholder="Иван Иванов" required />
             <span class="error-msg" id="nameError"></span>
@@ -94,34 +106,97 @@
     <main class="container admin-layout" id="adminSection" style="display:none">
       <section class="calendar-card">
         <h2>Административная панель</h2>
-        <div class="toolbar">
-          <div style="display:flex; gap:8px; align-items:center">
-            <div class="custom-date-picker" id="customDatePicker">
-              <div class="date-selected" id="dateSelected">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                <span id="dateText">Выбрать дату</span>
-              </div>
-              <div class="date-dropdown select-hide" id="dateDropdown">
-                <div class="mini-calendar">
-                  <div class="mini-calendar-header">
-                    <button class="mini-nav-btn" id="miniPrevMonth">‹</button>
-                    <div class="mini-month-label" id="miniMonthLabel"></div>
-                    <button class="mini-nav-btn" id="miniNextMonth">›</button>
-                  </div>
-                  <div class="mini-calendar-grid" id="miniCalendarGrid"></div>
+        
+        <!-- Tabs -->
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-tab="bookings" data-i18n="bookings">Записи</button>
+          <button class="admin-tab" data-tab="statistics" data-i18n="statistics">Статистика</button>
+          <button class="admin-tab" data-tab="test" data-i18n="testTools">Тестовые инструменты</button>
+        </div>
+
+        <!-- Bookings Tab -->
+        <div id="tabBookings" class="tab-content active">
+          <div class="toolbar">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+              <div class="custom-date-picker" id="customDatePicker">
+                <div class="date-selected" id="dateSelected">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span id="dateText" data-i18n="selectDate">Выбрать дату</span>
                 </div>
-                <input type="hidden" id="dateFilter" />
+                <div class="date-dropdown select-hide" id="dateDropdown">
+                  <div class="mini-calendar">
+                    <div class="mini-calendar-header">
+                      <button class="mini-nav-btn" id="miniPrevMonth">‹</button>
+                      <div class="mini-month-label" id="miniMonthLabel"></div>
+                      <button class="mini-nav-btn" id="miniNextMonth">›</button>
+                    </div>
+                    <div class="mini-calendar-grid" id="miniCalendarGrid"></div>
+                  </div>
+                  <input type="hidden" id="dateFilter" />
+                </div>
+              </div>
+              <div class="custom-select clinic-filter-select" id="customClinicFilter">
+                <div class="select-selected">Все клиники</div>
+                <div class="select-items select-hide" id="clinicFilterItems">
+                  <div data-value="">Все клиники</div>
+                </div>
+              </div>
+              <button class="ghost" id="clearFilter">Сбросить</button>
+            </div>
+          </div>
+          <div id="bookingsList"></div>
+        </div>
+
+        <!-- Statistics Tab -->
+        <div id="tabStatistics" class="tab-content">
+          <div style="margin-bottom: 20px;">
+            <div class="custom-select clinic-filter-select" id="customStatsClinicFilter" style="margin-bottom: 16px;">
+              <div class="select-selected">Все клиники</div>
+              <div class="select-items select-hide" id="statsClinicFilterItems">
+                <div data-value="">Все клиники</div>
               </div>
             </div>
-            <button class="ghost" id="clearFilter">Сбросить</button>
+          </div>
+          <div class="stats-filters">
+            <button class="stats-filter active" data-period="all" data-i18n="filterAll">Все время</button>
+            <button class="stats-filter" data-period="day" data-i18n="filterDay">День</button>
+            <button class="stats-filter" data-period="week" data-i18n="filterWeek">Неделя</button>
+            <button class="stats-filter" data-period="month" data-i18n="filterMonth">Месяц</button>
+            <button class="stats-filter" data-period="year" data-i18n="filterYear">Год</button>
+          </div>
+          <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+              <div class="stat-label" data-i18n="totalBookings">Всего записей</div>
+              <div class="stat-value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card stat-success">
+              <div class="stat-label" data-i18n="attendedCount">Пришли</div>
+              <div class="stat-value" id="statAttended">0</div>
+            </div>
+            <div class="stat-card stat-danger">
+              <div class="stat-label" data-i18n="notAttendedCount">Не пришли</div>
+              <div class="stat-value" id="statNotAttended">0</div>
+            </div>
+            <div class="stat-card stat-warning">
+              <div class="stat-label" data-i18n="pendingCount">Ожидают</div>
+              <div class="stat-value" id="statPending">0</div>
+            </div>
           </div>
         </div>
-        <div id="bookingsList"></div>
+
+        <!-- Test Tools Tab -->
+        <div id="tabTest" class="tab-content">
+          <div class="test-tools">
+            <button class="ghost danger" id="btnDeleteAll" data-i18n="deleteAll">Удалить все заявки</button>
+            <button class="ghost" id="btnFillSlot" data-i18n="fillSlot">Заполнить слот 9:00-9:30 23 числа</button>
+            <button class="ghost" id="btnFillDay" data-i18n="fillDay">Заполнить весь день</button>
+          </div>
+        </div>
       </section>
     </main>
 

@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { AppDataSource } = require('./data-source');
 const { In } = require('typeorm');
+const { generateBookingPDF } = require('./pdf-generator');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 const PORT = Number(process.env.PORT || 3000);
@@ -37,6 +38,7 @@ function authMiddleware(req, res, next){
 AppDataSource.initialize().then(async () => {
   const adminRepo = AppDataSource.getRepository('AdminUser');
   const bookingRepo = AppDataSource.getRepository('Booking');
+  const clinicRepo = AppDataSource.getRepository('Clinic');
 
   // Seed admin
   const existing = await adminRepo.findOne({ where: { username: 'admin' } });
@@ -46,6 +48,32 @@ AppDataSource.initialize().then(async () => {
     await adminRepo.save({ username: 'admin', passwordHash });
     console.log('Seeded admin user: admin /', password);
   }
+
+  // Seed clinics
+  const clinics = [
+    'ОРИС Теплый стан',
+    'ОРИС Электрозаводская',
+    'ОРИС Добрынинская'
+  ];
+  for(const name of clinics){
+    const exists = await clinicRepo.findOne({ where: { name } });
+    if(!exists){
+      await clinicRepo.save({ name });
+      console.log('Seeded clinic:', name);
+    }
+  }
+
+  // Get clinics
+  app.get('/api/clinics', async (req, res) => {
+    try {
+      const list = await clinicRepo.find({ order: { id: 'ASC' } });
+      console.log('Loaded clinics:', list.length);
+      res.json({ items: list });
+    } catch(err) {
+      console.error('Error loading clinics:', err);
+      res.status(500).json({ error: 'failed_to_load_clinics' });
+    }
+  });
 
   // Auth
   app.post('/api/auth/login', async (req, res) => {
@@ -62,12 +90,15 @@ AppDataSource.initialize().then(async () => {
   // Availability (capacity only)
   app.get('/api/availability', async (req, res) => {
     const date = (req.query.date || '').toString();
+    const clinicId = Number(req.query.clinicId) || null;
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'invalid_date' });
-    const capacity = 6;
+    if(!clinicId) return res.status(400).json({ error: 'missing_clinic' });
+    const capacity = 5;
     const slots = generateSlots('09:00', '18:30', 30);
     const activeBookings = await bookingRepo.createQueryBuilder('b')
       .where('b.date = :date', { date })
-      .andWhere('b.status IN (:...statuses)', { statuses: ['pending', 'approved'] })
+      .andWhere('b.clinicId = :clinicId', { clinicId })
+      .andWhere('b.status IN (:...statuses)', { statuses: ['pending', 'attended'] })
       .getMany();
     const map = {};
     for(const s of slots){
@@ -79,8 +110,8 @@ AppDataSource.initialize().then(async () => {
 
   // Create booking
   app.post('/api/bookings', async (req, res) => {
-    const { date, time, name, phone } = req.body || {};
-    if(!date || !time || !name || !phone) return res.status(400).json({ error: 'missing_fields' });
+    const { date, time, name, phone, clinicId } = req.body || {};
+    if(!date || !time || !name || !phone || !clinicId) return res.status(400).json({ error: 'missing_fields' });
     
     // Validate name (no special characters except spaces, hyphens, apostrophes)
     if(!/^[a-zA-Zа-яА-ЯёЁ\s\-']+$/.test(name)) {
@@ -92,45 +123,174 @@ AppDataSource.initialize().then(async () => {
       return res.status(400).json({ error: 'invalid_phone' });
     }
     
-    const capacity = 6;
+    const capacity = 5;
     const count = await bookingRepo.count({ 
       where: { 
         date, 
         time, 
-        status: In(['pending', 'approved']) 
+        clinicId: Number(clinicId),
+        status: In(['pending', 'attended']) 
       } 
     });
     if(count >= capacity) return res.status(409).json({ error: 'slot_full' });
-    const saved = await bookingRepo.save({ date, time, name, phone, status: 'pending' });
-    res.status(201).json({ id: saved.id });
+    const saved = await bookingRepo.save({ date, time, name, phone, clinicId: Number(clinicId), status: 'pending' });
+    res.status(201).json({ id: saved.id, bookingId: saved.id });
+  });
+
+  // Download booking PDF
+  app.get('/api/bookings/:id/pdf', async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const booking = await bookingRepo.findOne({ 
+        where: { id },
+        relations: ['clinic']
+      });
+      
+      if(!booking) return res.status(404).json({ error: 'not_found' });
+      
+      const pdfBuffer = await generateBookingPDF(booking, booking.clinic);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=booking-${booking.id}.pdf`);
+      res.send(pdfBuffer);
+    } catch(err) {
+      console.error('Error generating PDF:', err);
+      res.status(500).json({ error: 'pdf_generation_failed' });
+    }
   });
 
   // Admin bookings list
   app.get('/api/admin/bookings', authMiddleware, async (req, res) => {
     const date = (req.query.date || '').toString();
     const where = date ? { date } : {};
-    const list = await bookingRepo.find({ where, order: { date: 'ASC', time: 'ASC', createdAt: 'ASC' } });
+    const list = await bookingRepo.find({ 
+      where, 
+      relations: ['clinic'],
+      order: { date: 'ASC', time: 'ASC', createdAt: 'ASC' } 
+    });
     res.json({ items: list });
   });
 
-  // Approve booking
-  app.patch('/api/admin/bookings/:id/approve', authMiddleware, async (req, res) => {
+  // Mark as attended
+  app.patch('/api/admin/bookings/:id/attended', authMiddleware, async (req, res) => {
     const id = Number(req.params.id);
     const b = await bookingRepo.findOne({ where: { id } });
     if(!b) return res.status(404).json({ error: 'not_found' });
-    b.status = 'approved';
+    b.status = 'attended';
     await bookingRepo.save(b);
     res.json({ ok: true });
   });
 
-  // Reject booking
-  app.patch('/api/admin/bookings/:id/reject', authMiddleware, async (req, res) => {
+  // Mark as not attended
+  app.patch('/api/admin/bookings/:id/not-attended', authMiddleware, async (req, res) => {
     const id = Number(req.params.id);
     const b = await bookingRepo.findOne({ where: { id } });
     if(!b) return res.status(404).json({ error: 'not_found' });
-    b.status = 'rejected';
+    b.status = 'not_attended';
     await bookingRepo.save(b);
     res.json({ ok: true });
+  });
+
+  // Get statistics
+  app.get('/api/admin/statistics', authMiddleware, async (req, res) => {
+    const period = req.query.period || 'all'; // day, week, month, year, all
+    const clinicId = req.query.clinicId ? Number(req.query.clinicId) : null;
+    
+    const now = new Date();
+    let allBookings = await bookingRepo.find({ relations: ['clinic'] });
+    
+    // Filter by period
+    if(period === 'day') {
+      const today = now.toISOString().split('T')[0];
+      allBookings = allBookings.filter(b => b.date === today);
+    } else if(period === 'week') {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const weekAgoStr = weekAgo.toISOString().split('T')[0];
+      allBookings = allBookings.filter(b => b.date >= weekAgoStr);
+    } else if(period === 'month') {
+      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const monthAgoStr = monthAgo.toISOString().split('T')[0];
+      allBookings = allBookings.filter(b => b.date >= monthAgoStr);
+    } else if(period === 'year') {
+      const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      const yearAgoStr = yearAgo.toISOString().split('T')[0];
+      allBookings = allBookings.filter(b => b.date >= yearAgoStr);
+    }
+    
+    // Filter by clinic
+    if(clinicId) {
+      allBookings = allBookings.filter(b => b.clinicId === clinicId);
+    }
+    
+    const attended = allBookings.filter(b => b.status === 'attended').length;
+    const notAttended = allBookings.filter(b => b.status === 'not_attended').length;
+    const pending = allBookings.filter(b => b.status === 'pending').length;
+    const total = allBookings.length;
+    
+    res.json({ total, attended, notAttended, pending });
+  });
+
+  // Test: Delete all bookings
+  app.delete('/api/admin/test/delete-all', authMiddleware, async (req, res) => {
+    try {
+      await bookingRepo.clear();
+      res.json({ ok: true, message: 'All bookings deleted' });
+    } catch(err) {
+      console.error('Error deleting bookings:', err);
+      res.status(500).json({ error: 'Failed to delete bookings' });
+    }
+  });
+
+  // Test: Fill slot 9:00-9:30 on 23rd
+  app.post('/api/admin/test/fill-slot', authMiddleware, async (req, res) => {
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + (nextMonth.getDate() > 23 ? 1 : 0));
+    const date = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-23`;
+    const time = '09:00';
+    
+    const clinics = await clinicRepo.find();
+    const names = ['Иван Иванов', 'Петр Петров', 'Мария Смирнова', 'Анна Кузнецова', 'Сергей Попов'];
+    
+    for(const clinic of clinics) {
+      for(let i = 0; i < 5; i++) {
+        await bookingRepo.save({
+          date,
+          time,
+          name: names[i % names.length],
+          phone: `+7 ${Math.floor(Math.random() * 900 + 100)} ${Math.floor(Math.random() * 900 + 100)}-${String(Math.floor(Math.random() * 90 + 10))}-${String(Math.floor(Math.random() * 90 + 10))}`,
+          clinicId: clinic.id,
+          status: 'pending'
+        });
+      }
+    }
+    
+    res.json({ ok: true, message: 'Slot 09:00-09:30 filled for all clinics' });
+  });
+
+  // Test: Fill all day
+  app.post('/api/admin/test/fill-day', authMiddleware, async (req, res) => {
+    const today = new Date().toISOString().split('T')[0];
+    const slots = generateSlots('09:00', '18:30', 30);
+    
+    const clinics = await clinicRepo.find();
+    const names = ['Иван Иванов', 'Петр Петров', 'Мария Смирнова', 'Анна Кузнецова', 'Сергей Попов'];
+    
+    for(const clinic of clinics) {
+      for(const time of slots) {
+        for(let i = 0; i < 5; i++) {
+          await bookingRepo.save({
+            date: today,
+            time,
+            name: names[i % names.length],
+            phone: `+7 ${Math.floor(Math.random() * 900 + 100)} ${Math.floor(Math.random() * 900 + 100)}-${String(Math.floor(Math.random() * 90 + 10))}-${String(Math.floor(Math.random() * 90 + 10))}`,
+            clinicId: clinic.id,
+            status: 'pending'
+          });
+        }
+      }
+    }
+    
+    res.json({ ok: true, message: 'All slots filled for today' });
   });
 
   // no block endpoints — only capacity used

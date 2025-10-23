@@ -5,8 +5,13 @@
     currentMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     selectedDateISO: null,
     selectedTime: null,
+    selectedClinicId: null,
+    clinics: [],
+    adminClinicFilter: null,
+    statsClinicFilter: null,
+    statsPeriod: 'all',
     lang: localStorage.getItem('lang') || 'ru',
-    theme: localStorage.getItem('theme') || 'dark',
+    theme: localStorage.getItem('theme') || 'light',
     workday: { start: '09:00', end: '18:30' },
     availabilityCache: {},
     isAdmin: false,
@@ -16,11 +21,12 @@
   const i18n = {
     ru: { 
       day:'День', evening:'Вечер', formTitle:'Запись на прием', name:'Имя', phone:'Телефон', 
-      noSlot:'Выберите дату и время', book:'Записаться', success:'Заявка отправлена успешно!', 
+      clinic:'Выберите клинику', selectClinic:'Выберите клинику',
+      noSlot:'Выберите дату и время', book:'Записаться', success:'Вы записаны на прием!', 
       booked:'Забронировано', months:['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'], 
       privacy:'Отправляя заявку, вы соглашаетесь с обработкой персональных данных', full:'Занято',
       welcomeTitle: 'Добро пожаловать!',
-      welcomeText: 'Воспользуйтесь нашим сервисом онлайн-записи. Выберите удобную дату и время для посещения.',
+      welcomeText: 'Запишитесь на медицинский осмотр',
       startBooking: 'Начать запись',
       adminLogin: 'Вход в админ-панель',
       username: 'Логин',
@@ -34,21 +40,37 @@
       validationError: 'Ошибка валидации',
       emptyBookings: 'Заявок нет',
       pending: 'Ожидает',
-      approved: 'Подтверждена',
-      rejected: 'Отклонена',
-      approve: 'Подтвердить',
-      reject: 'Отклонить',
-      approveError: 'Ошибка подтверждения',
-      rejectError: 'Ошибка отклонения',
-      selectDate: 'Выбрать дату'
+      attended: 'Пришел',
+      notAttended: 'Не пришел',
+      markAttended: 'Пришел',
+      markNotAttended: 'Не пришел',
+      selectDate: 'Выбрать дату',
+      bookings: 'Записи',
+      statistics: 'Статистика',
+      testTools: 'Тестовые инструменты',
+      totalBookings: 'Всего записей',
+      attendedCount: 'Пришли',
+      notAttendedCount: 'Не пришли',
+      pendingCount: 'Ожидают',
+      filterDay: 'День',
+      filterWeek: 'Неделя',
+      filterMonth: 'Месяц',
+      filterYear: 'Год',
+      filterAll: 'Все время',
+      deleteAll: 'Удалить все заявки',
+      fillSlot: 'Заполнить слот 9:00-9:30 23 числа',
+      fillDay: 'Заполнить весь день',
+      confirmDelete: 'Вы уверены? Это удалит ВСЕ заявки!',
+      testSuccess: 'Операция выполнена успешно'
     },
     en: { 
       day:'Day', evening:'Evening', formTitle:'Book an appointment', name:'Name', phone:'Phone', 
-      noSlot:'Select date and time', book:'Book', success:'Request sent successfully!', 
+      clinic:'Select clinic', selectClinic:'Select clinic',
+      noSlot:'Select date and time', book:'Book', success:'You are booked for an appointment!', 
       booked:'Booked', months:['January','February','March','April','May','June','July','August','September','October','November','December'], 
       privacy:'By submitting you agree to the Privacy Policy', full:'Full',
       welcomeTitle: 'Welcome!',
-      welcomeText: 'Use our online booking service. Choose a convenient date and time for your visit.',
+      welcomeText: 'Book a medical examination',
       startBooking: 'Start Booking',
       adminLogin: 'Admin Login',
       username: 'Username',
@@ -62,13 +84,116 @@
       validationError: 'Validation error',
       emptyBookings: 'No bookings',
       pending: 'Pending',
-      approved: 'Approved',
-      rejected: 'Rejected',
-      approve: 'Approve',
-      reject: 'Reject',
-      approveError: 'Approve error',
-      rejectError: 'Reject error',
-      selectDate: 'Select date'
+      attended: 'Attended',
+      notAttended: 'Not Attended',
+      markAttended: 'Attended',
+      markNotAttended: 'Not Attended',
+      selectDate: 'Select date',
+      bookings: 'Bookings',
+      statistics: 'Statistics',
+      testTools: 'Test Tools',
+      totalBookings: 'Total Bookings',
+      attendedCount: 'Attended',
+      notAttendedCount: 'Not Attended',
+      pendingCount: 'Pending',
+      filterDay: 'Day',
+      filterWeek: 'Week',
+      filterMonth: 'Month',
+      filterYear: 'Year',
+      filterAll: 'All Time',
+      deleteAll: 'Delete all bookings',
+      fillSlot: 'Fill slot 9:00-9:30 on 23rd',
+      fillDay: 'Fill entire day',
+      confirmDelete: 'Are you sure? This will delete ALL bookings!',
+      testSuccess: 'Operation completed successfully'
+    },
+    uz: { 
+      day:'Kun', evening:'Kechqurun', formTitle:'Qabulga yozilish', name:'Ism', phone:'Telefon', 
+      clinic:'Klinikani tanlang', selectClinic:'Klinikani tanlang',
+      noSlot:'Sana va vaqtni tanlang', book:'Yozilish', success:'Siz qabulga yozildingiz!', 
+      booked:'Band qilingan', months:['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'], 
+      privacy:'Arizani yuborish orqali siz shaxsiy ma\'lumotlarni qayta ishlashga rozilik bildirasiz', full:'Band',
+      welcomeTitle: 'Xush kelibsiz!',
+      welcomeText: 'Tibbiy ko\'rikdan o\'tish uchun yoziling',
+      startBooking: 'Yozilishni boshlash',
+      adminLogin: 'Admin Login',
+      username: 'Username',
+      password: 'Password',
+      login: 'Login',
+      invalidName: 'Ism faqat harflardan iborat bo\'lishi kerak',
+      invalidPhone: 'Telefon raqami noto\'g\'ri',
+      loginFailed: 'Invalid username or password',
+      error: 'Xatolik',
+      connectionError: 'Ulanish xatosi',
+      validationError: 'Tekshirish xatosi',
+      emptyBookings: 'No bookings',
+      pending: 'Pending',
+      attended: 'Attended',
+      notAttended: 'Not Attended',
+      markAttended: 'Attended',
+      markNotAttended: 'Not Attended',
+      selectDate: 'Select date',
+      bookings: 'Bookings',
+      statistics: 'Statistics',
+      testTools: 'Test Tools',
+      totalBookings: 'Total Bookings',
+      attendedCount: 'Attended',
+      notAttendedCount: 'Not Attended',
+      pendingCount: 'Pending',
+      filterDay: 'Day',
+      filterWeek: 'Week',
+      filterMonth: 'Month',
+      filterYear: 'Year',
+      filterAll: 'All Time',
+      deleteAll: 'Delete all bookings',
+      fillSlot: 'Fill slot 9:00-9:30 on 23rd',
+      fillDay: 'Fill entire day',
+      confirmDelete: 'Are you sure? This will delete ALL bookings!',
+      testSuccess: 'Operation completed successfully'
+    },
+    tj: { 
+      day:'Рӯз', evening:'Бегоҳ', formTitle:'Ба қабул ном навис', name:'Ном', phone:'Телефон', 
+      clinic:'Клиниканро интихоб кунед', selectClinic:'Клиниканро интихоб кунед',
+      noSlot:'Сана ва вақтро интихоб кунед', book:'Ном навис', success:'Шумо ба қабул ном навишта шудед!', 
+      booked:'Банд', months:['Январ','Феврал','Март','Апрел','Май','Июн','Июл','Август','Сентябр','Октябр','Ноябр','Декабр'], 
+      privacy:'Бо фиристодани дархост шумо розӣ мешавед, ки маълумоти шахсии худро коркард кунед', full:'Банд',
+      welcomeTitle: 'Хуш омадед!',
+      welcomeText: 'Барои санҷиши тиббӣ ном нависед',
+      startBooking: 'Ном нависиро оғоз кунед',
+      adminLogin: 'Admin Login',
+      username: 'Username',
+      password: 'Password',
+      login: 'Login',
+      invalidName: 'Ном бояд танҳо аз ҳарфҳо иборат бошад',
+      invalidPhone: 'Рақами телефон нодуруст аст',
+      loginFailed: 'Invalid username or password',
+      error: 'Хатогӣ',
+      connectionError: 'Хатогии алоқа',
+      validationError: 'Хатогии тафтиш',
+      emptyBookings: 'No bookings',
+      pending: 'Pending',
+      attended: 'Attended',
+      notAttended: 'Not Attended',
+      markAttended: 'Attended',
+      markNotAttended: 'Not Attended',
+      selectDate: 'Select date',
+      bookings: 'Bookings',
+      statistics: 'Statistics',
+      testTools: 'Test Tools',
+      totalBookings: 'Total Bookings',
+      attendedCount: 'Attended',
+      notAttendedCount: 'Not Attended',
+      pendingCount: 'Pending',
+      filterDay: 'Day',
+      filterWeek: 'Week',
+      filterMonth: 'Month',
+      filterYear: 'Year',
+      filterAll: 'All Time',
+      deleteAll: 'Delete all bookings',
+      fillSlot: 'Fill slot 9:00-9:30 on 23rd',
+      fillDay: 'Fill entire day',
+      confirmDelete: 'Are you sure? This will delete ALL bookings!',
+      testSuccess: 'Operation completed successfully'
     }
   };
 
@@ -89,6 +214,8 @@
     bookingForm: document.getElementById('bookingForm'), 
     submitBtn: document.getElementById('submitBtn'), 
     toast: document.getElementById('toast'), 
+    customClinicSelect: document.getElementById('customClinicSelect'),
+    clinicSelectItems: document.getElementById('clinicSelectItems'),
     nameInput: document.getElementById('name'),
     phoneInput: document.getElementById('phone'),
     nameError: document.getElementById('nameError'),
@@ -121,8 +248,8 @@
     const options = items.querySelectorAll('div');
     
     // Update selected text based on current language
-    const langText = state.lang === 'ru' ? 'RU' : 'EN';
-    selected.textContent = langText;
+    const langMap = { ru: 'RU', en: 'EN', uz: 'UZ', tj: 'TJ' };
+    selected.textContent = langMap[state.lang] || 'RU';
     
     selected.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -300,7 +427,8 @@
         // Update display text
         const dateText = document.getElementById('dateText');
         const date = new Date(dateISO + 'T00:00:00');
-        const formatted = date.toLocaleDateString(state.lang === 'ru' ? 'ru-RU' : 'en-GB', {
+        const localeMap = { ru: 'ru-RU', en: 'en-GB', uz: 'uz-UZ', tj: 'ru-RU' };
+        const formatted = date.toLocaleDateString(localeMap[state.lang] || 'ru-RU', {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric'
@@ -315,6 +443,160 @@
         
         // Load bookings
         loadBookings();
+      });
+    });
+  }
+
+  async function loadClinics(){
+    try {
+      const res = await fetch('/api/clinics');
+      if(!res.ok) {
+        console.error('Failed to load clinics, status:', res.status);
+        throw new Error('Failed to load clinics: ' + res.status);
+      }
+      const data = await res.json();
+      state.clinics = data.items || [];
+      
+      // Populate custom clinic select
+      elements.clinicSelectItems.innerHTML = '';
+      state.clinics.forEach(clinic => {
+        const div = document.createElement('div');
+        div.setAttribute('data-value', clinic.id);
+        div.setAttribute('data-name', clinic.name);
+        div.textContent = clinic.name;
+        elements.clinicSelectItems.appendChild(div);
+      });
+      
+      // Populate admin clinic filter
+      const clinicFilterItems = document.getElementById('clinicFilterItems');
+      if(clinicFilterItems) {
+        clinicFilterItems.innerHTML = '<div data-value="">Все клиники</div>';
+        state.clinics.forEach(clinic => {
+          const div = document.createElement('div');
+          div.setAttribute('data-value', clinic.id);
+          div.textContent = clinic.name;
+          clinicFilterItems.appendChild(div);
+        });
+        initClinicFilterSelect();
+      }
+
+      // Populate stats clinic filter
+      const statsClinicFilterItems = document.getElementById('statsClinicFilterItems');
+      if(statsClinicFilterItems) {
+        statsClinicFilterItems.innerHTML = '<div data-value="">Все клиники</div>';
+        state.clinics.forEach(clinic => {
+          const div = document.createElement('div');
+          div.setAttribute('data-value', clinic.id);
+          div.textContent = clinic.name;
+          statsClinicFilterItems.appendChild(div);
+        });
+        initStatsClinicFilterSelect();
+      }
+      
+      // Initialize custom clinic select after items are loaded
+      initClinicSelect();
+    } catch(err) {
+      console.error('Failed to load clinics:', err);
+      showToast('Не удалось загрузить список клиник. Перезагрузите страницу.');
+    }
+  }
+  
+  function initClinicFilterSelect() {
+    const selectElement = document.getElementById('customClinicFilter');
+    if(!selectElement) return;
+    
+    const selected = selectElement.querySelector('.select-selected');
+    const items = document.getElementById('clinicFilterItems');
+    const options = items.querySelectorAll('div');
+    
+    selected.addEventListener('click', function(e) {
+      e.stopPropagation();
+      closeAllSelect(this);
+      items.classList.toggle('select-hide');
+      this.classList.toggle('select-arrow-active');
+    });
+    
+    options.forEach(option => {
+      option.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const clinicId = this.getAttribute('data-value');
+        selected.textContent = this.textContent;
+        items.classList.add('select-hide');
+        selected.classList.remove('select-arrow-active');
+        
+        // Update filter
+        state.adminClinicFilter = clinicId ? Number(clinicId) : null;
+        loadBookings();
+      });
+    });
+  }
+
+  function initStatsClinicFilterSelect() {
+    const selectElement = document.getElementById('customStatsClinicFilter');
+    if(!selectElement) return;
+    
+    const selected = selectElement.querySelector('.select-selected');
+    const items = document.getElementById('statsClinicFilterItems');
+    const options = items.querySelectorAll('div');
+    
+    selected.addEventListener('click', function(e) {
+      e.stopPropagation();
+      closeAllSelect(this);
+      items.classList.toggle('select-hide');
+      this.classList.toggle('select-arrow-active');
+    });
+    
+    options.forEach(option => {
+      option.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const clinicId = this.getAttribute('data-value');
+        selected.textContent = this.textContent;
+        items.classList.add('select-hide');
+        selected.classList.remove('select-arrow-active');
+        
+        // Update filter
+        state.statsClinicFilter = clinicId ? Number(clinicId) : null;
+        loadStatistics(state.statsPeriod);
+      });
+    });
+  }
+  
+  function initClinicSelect() {
+    const selectElement = elements.customClinicSelect;
+    if(!selectElement) return;
+    
+    const selected = selectElement.querySelector('.select-selected');
+    const items = elements.clinicSelectItems;
+    const options = items.querySelectorAll('div');
+    
+    selected.addEventListener('click', function(e) {
+      e.stopPropagation();
+      closeAllSelect(this);
+      items.classList.toggle('select-hide');
+      this.classList.toggle('select-arrow-active');
+    });
+    
+    options.forEach(option => {
+      option.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        const clinicId = this.getAttribute('data-value');
+        const clinicName = this.getAttribute('data-name');
+        selected.textContent = clinicName;
+        items.classList.add('select-hide');
+        selected.classList.remove('select-arrow-active');
+        
+        // Update selected clinic
+        state.selectedClinicId = Number(clinicId);
+        state.availabilityCache = {};
+        
+        // Preload month availability to show full days in calendar
+        await preloadMonthAvailability();
+        
+        // Reload slots if date already selected
+        if(state.selectedDateISO && state.selectedClinicId){
+          await ensureAvailability(state.selectedDateISO);
+          renderSlots();
+        }
       });
     });
   }
@@ -334,6 +616,9 @@
     // Initialize custom date picker
     initCustomDatePicker();
     
+    // Load clinics
+    loadClinics();
+    
     // Check if already logged in
     if(getToken()) {
       state.isAdmin = true;
@@ -350,8 +635,8 @@
       if(e.target === elements.loginModal) closeLoginModal();
     });
     
-    elements.prevMonth.addEventListener('click', () => changeMonth(-1));
-    elements.nextMonth.addEventListener('click', () => changeMonth(1));
+    elements.prevMonth.addEventListener('click', async () => await changeMonth(-1));
+    elements.nextMonth.addEventListener('click', async () => await changeMonth(1));
     elements.themeToggle.addEventListener('click', toggleTheme);
     elements.bookingForm.addEventListener('submit', onSubmit);
     
@@ -368,8 +653,38 @@
       if(dateText) {
         dateText.textContent = i18n[state.lang].selectDate;
       }
+      // Reset clinic filter
+      state.adminClinicFilter = null;
+      const clinicFilterSelected = document.querySelector('#customClinicFilter .select-selected');
+      if(clinicFilterSelected) {
+        clinicFilterSelected.textContent = 'Все клиники';
+      }
       loadBookings(); 
     });
+
+    // Admin tab switching
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        switchAdminTab(tab.getAttribute('data-tab'));
+      });
+    });
+
+    // Statistics filters
+    document.querySelectorAll('.stats-filter').forEach(filter => {
+      filter.addEventListener('click', () => {
+        document.querySelectorAll('.stats-filter').forEach(f => f.classList.remove('active'));
+        filter.classList.add('active');
+        loadStatistics(filter.getAttribute('data-period'));
+      });
+    });
+
+    // Test buttons
+    const btnDeleteAll = document.getElementById('btnDeleteAll');
+    const btnFillSlot = document.getElementById('btnFillSlot');
+    const btnFillDay = document.getElementById('btnFillDay');
+    if(btnDeleteAll) btnDeleteAll.addEventListener('click', deleteAllBookings);
+    if(btnFillSlot) btnFillSlot.addEventListener('click', fillSlot);
+    if(btnFillDay) btnFillDay.addEventListener('click', fillDay);
     
     renderCalendar();
     renderSlots();
@@ -460,7 +775,14 @@
       }
       
       const data = await res.json();
-      renderBookingsList(data.items || []);
+      let items = data.items || [];
+      
+      // Apply clinic filter
+      if(state.adminClinicFilter) {
+        items = items.filter(item => item.clinic && item.clinic.id === state.adminClinicFilter);
+      }
+      
+      renderBookingsList(items);
     } catch(err) {
       console.error('Failed to load bookings:', err);
     }
@@ -473,66 +795,152 @@
     }
     
     elements.bookingsList.innerHTML = items.map(item => {
-      const statusClass = item.status === 'approved' ? 'approved' : item.status === 'rejected' ? 'rejected' : 'pending';
-      const statusText = item.status === 'approved' ? i18n[state.lang].approved : item.status === 'rejected' ? i18n[state.lang].rejected : i18n[state.lang].pending;
+      const statusClass = item.status === 'attended' ? 'approved' : item.status === 'not_attended' ? 'rejected' : 'pending';
+      const statusText = item.status === 'attended' ? i18n[state.lang].attended : item.status === 'not_attended' ? i18n[state.lang].notAttended : i18n[state.lang].pending;
+      const clinicName = item.clinic ? item.clinic.name : 'N/A';
+      const timeRange = getTimeRange(item.time);
       
       return `<div class="booking-item">
         <div class="booking-info">
-          <div class="booking-date">${item.date} • ${item.time}</div>
+          <div class="booking-date">${item.date} • ${timeRange}</div>
           <div class="booking-contact">${item.name} • ${item.phone}</div>
+          <div class="booking-clinic">${clinicName}</div>
         </div>
         <div class="booking-actions">
           <span class="badge ${statusClass}">${statusText}</span>
           ${item.status === 'pending' ? `
-            <button class="btn-approve" data-id="${item.id}">${i18n[state.lang].approve}</button>
-            <button class="btn-reject" data-id="${item.id}">${i18n[state.lang].reject}</button>
+            <button class="btn-approve" data-id="${item.id}">${i18n[state.lang].markAttended}</button>
+            <button class="btn-reject" data-id="${item.id}">${i18n[state.lang].markNotAttended}</button>
           ` : ''}
         </div>
       </div>`;
     }).join('');
     
     elements.bookingsList.querySelectorAll('.btn-approve').forEach(btn => {
-      btn.addEventListener('click', () => approveBooking(btn.getAttribute('data-id')));
+      btn.addEventListener('click', () => markAttended(btn.getAttribute('data-id')));
     });
     
     elements.bookingsList.querySelectorAll('.btn-reject').forEach(btn => {
-      btn.addEventListener('click', () => rejectBooking(btn.getAttribute('data-id')));
+      btn.addEventListener('click', () => markNotAttended(btn.getAttribute('data-id')));
     });
   }
 
-  async function approveBooking(id) {
+  async function markAttended(id) {
     try {
-      const res = await fetch(`/api/admin/bookings/${id}/approve`, { 
+      const res = await fetch(`/api/admin/bookings/${id}/attended`, { 
         method:'PATCH', 
         headers: authHeader() 
       });
       
       if(!res.ok) {
-        showToast(i18n[state.lang].approveError);
+        showToast(i18n[state.lang].error);
         return;
       }
       
+      showToast('Отмечено: пришел');
       loadBookings();
     } catch(err) {
-      showToast(i18n[state.lang].approveError);
+      showToast(i18n[state.lang].connectionError);
     }
   }
 
-  async function rejectBooking(id) {
+  async function markNotAttended(id) {
     try {
-      const res = await fetch(`/api/admin/bookings/${id}/reject`, { 
+      const res = await fetch(`/api/admin/bookings/${id}/not-attended`, { 
         method:'PATCH', 
         headers: authHeader() 
       });
       
       if(!res.ok) {
-        showToast(i18n[state.lang].rejectError);
+        showToast(i18n[state.lang].error);
         return;
       }
       
+      showToast('Отмечено: не пришел');
       loadBookings();
     } catch(err) {
-      showToast(i18n[state.lang].rejectError);
+      showToast(i18n[state.lang].connectionError);
+    }
+  }
+
+  // Admin Tabs
+  function switchAdminTab(tabName) {
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.toggle('active', content.id === `tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
+    });
+    
+    if(tabName === 'statistics') {
+      loadStatistics('all');
+    }
+  }
+
+  // Statistics
+  async function loadStatistics(period) {
+    state.statsPeriod = period;
+    try {
+      let url = `/api/admin/statistics?period=${period}`;
+      if(state.statsClinicFilter) {
+        url += `&clinicId=${state.statsClinicFilter}`;
+      }
+      const res = await fetch(url, { headers: authHeader() });
+      if(res.ok) {
+        const data = await res.json();
+        document.getElementById('statTotal').textContent = data.total;
+        document.getElementById('statAttended').textContent = data.attended;
+        document.getElementById('statNotAttended').textContent = data.notAttended;
+        document.getElementById('statPending').textContent = data.pending;
+      }
+    } catch(err) {
+      console.error('Failed to load statistics:', err);
+    }
+  }
+
+  // Test functions
+  async function deleteAllBookings() {
+    if(!confirm(i18n[state.lang].confirmDelete)) return;
+    try {
+      const res = await fetch('/api/admin/test/delete-all', { 
+        method: 'DELETE', 
+        headers: authHeader()
+      });
+      if(res.ok) {
+        showToast(i18n[state.lang].testSuccess);
+        loadBookings();
+      }
+    } catch(err) {
+      showToast(i18n[state.lang].connectionError);
+    }
+  }
+
+  async function fillSlot() {
+    try {
+      const res = await fetch('/api/admin/test/fill-slot', { 
+        method: 'POST', 
+        headers: authHeader()
+      });
+      if(res.ok) {
+        showToast(i18n[state.lang].testSuccess);
+      }
+    } catch(err) {
+      showToast(i18n[state.lang].connectionError);
+    }
+  }
+
+  async function fillDay() {
+    try {
+      const res = await fetch('/api/admin/test/fill-day', { 
+        method: 'POST', 
+        headers: authHeader()
+      });
+      if(res.ok) {
+        showToast(i18n[state.lang].testSuccess);
+        loadBookings();
+      }
+    } catch(err) {
+      showToast(i18n[state.lang].connectionError);
     }
   }
 
@@ -600,6 +1008,7 @@
     validatePhone();
   }
 
+
   function validatePhone() {
     const value = elements.phoneInput.value.trim();
     const digitsOnly = value.replace(/\D/g, '');
@@ -640,10 +1049,11 @@
     }); 
   }
 
-  function changeMonth(delta){ 
+  async function changeMonth(delta){ 
     const d = new Date(state.currentMonth); 
     d.setMonth(d.getMonth()+delta); 
     state.currentMonth = new Date(d.getFullYear(), d.getMonth(), 1); 
+    await preloadMonthAvailability();
     renderCalendar(); 
   }
 
@@ -665,10 +1075,15 @@
       const isSelected = state.selectedDateISO === iso;
       const isPast = iso < todayISO;
       
+      // Check if all slots are full for this day
+      const dayAvailability = state.availabilityCache[iso];
+      const isFullDay = dayAvailability && dayAvailability.every(slot => slot.full);
+      
       if(isPast){
         cells.push(`<div class="day-cell muted past">${day}</div>`);
       } else {
-        cells.push(`<button class="day-cell ${isSelected? 'selected':''}\" data-iso=\"${iso}\">${day}</button>`);
+        const fullClass = isFullDay ? 'full-day' : '';
+        cells.push(`<button class="day-cell ${isSelected? 'selected':''} ${fullClass}" data-iso="${iso}">${day}</button>`);
       }
     }
     
@@ -686,12 +1101,33 @@
   }
 
   async function ensureAvailability(dateISO){ 
-    if(!dateISO) return; 
-    const res = await fetch(`/api/availability?date=${encodeURIComponent(dateISO)}`); 
+    if(!dateISO || !state.selectedClinicId) return; 
+    const res = await fetch(`/api/availability?date=${encodeURIComponent(dateISO)}&clinicId=${state.selectedClinicId}`); 
     if(res.ok){ 
       const data=await res.json(); 
       state.availabilityCache[dateISO]=data.slots; 
     } 
+  }
+
+  async function preloadMonthAvailability() {
+    if(!state.selectedClinicId) return;
+    
+    const month = state.currentMonth.getMonth(); 
+    const year = state.currentMonth.getFullYear(); 
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const todayISO = toISO(new Date());
+    
+    // Load availability for all future dates in current month
+    const promises = [];
+    for(let day = 1; day <= daysInMonth; day++) {
+      const iso = toISO(new Date(year, month, day));
+      if(iso >= todayISO && !state.availabilityCache[iso]) {
+        promises.push(ensureAvailability(iso));
+      }
+    }
+    
+    await Promise.all(promises);
+    renderCalendar();
   }
 
   function renderSlots(){
@@ -703,15 +1139,26 @@
     renderSlotList(elements.eveningSlots, eve);
   }
 
+  function getTimeRange(startTime) {
+    const [h, m] = startTime.split(':').map(Number);
+    const totalMinutes = h * 60 + m;
+    const endMinutes = totalMinutes + 30;
+    const endH = Math.floor(endMinutes / 60);
+    const endM = endMinutes % 60;
+    const endTime = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+    return `${startTime}-${endTime}`;
+  }
+
   function renderSlotList(container, times){
     const date = state.selectedDateISO; 
     const avail = date ? (state.availabilityCache[date] || []) : [];
     
     container.innerHTML = times.map(t => {
-      const info = avail.find(s=>s.time===t) || { capacity: 6, booked: 0, full: false };
-      const remaining = Math.max(0, (info.capacity||6) - (info.booked||0));
+      const info = avail.find(s=>s.time===t) || { capacity: 5, booked: 0, full: false };
+      const remaining = Math.max(0, (info.capacity||5) - (info.booked||0));
       const full = !!info.full || remaining === 0;
-      const label = full ? `${t} · ${i18n[state.lang].full}` : `${t} · ${remaining}`;
+      const timeRange = getTimeRange(t);
+      const label = full ? `${timeRange} · ${i18n[state.lang].full}` : `${timeRange} · ${remaining}`;
       const isSelected = state.selectedTime === t; 
       const disabled = !date || full;
       
@@ -732,8 +1179,10 @@
   function updateSelectedLabel(){ 
     if(state.selectedDateISO && state.selectedTime){ 
       const d = new Date(state.selectedDateISO); 
-      const fmt = d.toLocaleDateString(state.lang==='ru'?'ru-RU':'en-GB',{ day:'2-digit', month:'2-digit', year:'numeric' }); 
-      elements.selectedSlot.textContent = `${fmt} • ${state.selectedTime}`; 
+      const localeMap = { ru: 'ru-RU', en: 'en-GB', uz: 'uz-UZ', tj: 'ru-RU' };
+      const fmt = d.toLocaleDateString(localeMap[state.lang] || 'ru-RU',{ day:'2-digit', month:'2-digit', year:'numeric' }); 
+      const timeRange = getTimeRange(state.selectedTime);
+      elements.selectedSlot.textContent = `${fmt} • ${timeRange}`; 
       elements.selectedSlot.classList.add('has-selection');
     } else { 
       elements.selectedSlot.textContent = i18n[state.lang].noSlot; 
@@ -745,7 +1194,7 @@
   async function onSubmit(e){ 
     e.preventDefault(); 
     
-    if(!state.selectedDateISO || !state.selectedTime) return; 
+    if(!state.selectedDateISO || !state.selectedTime || !state.selectedClinicId) return; 
     
     const formData = new FormData(elements.bookingForm); 
     const name=(formData.get('name')||'').toString().trim(); 
@@ -763,7 +1212,7 @@
       const res = await fetch('/api/bookings', { 
         method:'POST', 
         headers:{ 'Content-Type':'application/json' }, 
-        body: JSON.stringify({ date: state.selectedDateISO, time: state.selectedTime, name, phone }) 
+        body: JSON.stringify({ date: state.selectedDateISO, time: state.selectedTime, name, phone, clinicId: state.selectedClinicId }) 
       });
       
       if(res.status === 400) {
@@ -790,15 +1239,35 @@
         return; 
       }
       
+      const result = await res.json();
+      const bookingId = result.bookingId || result.id;
+      
       elements.bookingForm.reset(); 
       showToast(i18n[state.lang].success); 
       state.selectedTime=null; 
       await ensureAvailability(state.selectedDateISO); 
       renderSlots(); 
       updateSelectedLabel();
+      
+      // Download PDF
+      if(bookingId) {
+        setTimeout(() => {
+          downloadBookingPDF(bookingId);
+        }, 1000);
+      }
     } catch(err) {
       showToast(i18n[state.lang].connectionError);
     }
+  }
+
+  // Download PDF
+  function downloadBookingPDF(bookingId) {
+    const link = document.createElement('a');
+    link.href = `/api/bookings/${bookingId}/pdf`;
+    link.download = `booking-${bookingId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   // Helpers

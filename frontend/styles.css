@@ -362,6 +362,68 @@ html.light .app-header {
   user-select: none;
 }
 
+/* Clinic selector - full width */
+.clinic-select {
+  display: block;
+  width: 100%;
+}
+
+/* Clinic filter in admin panel */
+.clinic-filter-select {
+  min-width: 200px;
+}
+
+.clinic-filter-select .select-selected {
+  padding: 8px 26px 8px 12px;
+}
+
+.clinic-filter-select .select-items div {
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--stroke);
+}
+
+.clinic-filter-select .select-items div:last-child {
+  border-bottom: none;
+}
+
+.clinic-filter-select .select-items div:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.clinic-select .select-selected {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 12px 40px 12px 14px;
+  font-size: 15px;
+  min-height: 46px;
+}
+
+.clinic-select .select-selected:after {
+  right: 14px;
+  border-width: 5px;
+  border-top-color: var(--primary);
+}
+
+.clinic-select .select-items div {
+  padding: 12px 14px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--stroke);
+}
+
+.clinic-select .select-items div:last-child {
+  border-bottom: none;
+}
+
+.clinic-select .select-items div:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
 .select-selected {
   background: var(--elev);
   color: var(--text);
@@ -601,33 +663,7 @@ html.light .app-header {
   cursor: not-allowed;
 }
 
-select {
-  transition: all 0.3s ease;
-  background: var(--elev);
-  color: var(--text);
-  border: 2px solid var(--stroke);
-  padding: 8px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-select:hover {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
-
-select option {
-  background: var(--surface);
-  color: var(--text);
-  padding: 8px;
-}
+/* Select styles moved to input section for consistency */
 
 /* Welcome Section */
 .welcome-section{
@@ -812,6 +848,41 @@ html.light .day-cell:hover:not(.muted):not(.past){
 .day-cell.past{
   opacity:.35; 
   cursor:not-allowed;
+}
+
+.day-cell.full-day{
+  background:linear-gradient(135deg, rgba(239,68,68,.25) 0%, rgba(239,68,68,.35) 100%);
+  color:var(--danger) !important;
+  border:2px solid var(--danger);
+  font-weight:700;
+  animation: pulseRed 2s ease-in-out infinite;
+  box-shadow: 0 0 15px rgba(239,68,68,.3), 0 4px 12px rgba(239,68,68,.2);
+}
+
+.day-cell.full-day:hover{
+  background:linear-gradient(135deg, rgba(239,68,68,.4) 0%, rgba(239,68,68,.5) 100%);
+  box-shadow: 0 0 25px rgba(239,68,68,.5), 0 4px 16px rgba(239,68,68,.3);
+  animation: pulseRedFast 1s ease-in-out infinite;
+}
+
+@keyframes pulseRed {
+  0%, 100% { 
+    box-shadow: 0 0 15px rgba(239,68,68,.3), 0 4px 12px rgba(239,68,68,.2);
+    border-color: var(--danger);
+  }
+  50% { 
+    box-shadow: 0 0 25px rgba(239,68,68,.5), 0 4px 20px rgba(239,68,68,.4);
+    border-color: #ff5555;
+  }
+}
+
+@keyframes pulseRedFast {
+  0%, 100% { 
+    box-shadow: 0 0 25px rgba(239,68,68,.5), 0 4px 16px rgba(239,68,68,.3);
+  }
+  50% { 
+    box-shadow: 0 0 35px rgba(239,68,68,.7), 0 4px 24px rgba(239,68,68,.5);
+  }
 }
 
 /* Slots */
@@ -1207,6 +1278,13 @@ html.light .booking-item:hover{
 .booking-contact{
   color:var(--muted); 
   font-size:14px;
+}
+
+.booking-clinic{
+  color:var(--primary); 
+  font-size:13px;
+  font-weight:600;
+  margin-top:4px;
 }
 
 .booking-actions{
@@ -1689,6 +1767,158 @@ html.light .booking-item:hover{
     height: 16px;
     width: 16px;
   }
+}
+
+/* Admin Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--stroke);
+  padding-bottom: 0;
+}
+
+.admin-tab {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+
+.admin-tab:hover {
+  color: var(--text);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.admin-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.tab-content {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Statistics */
+.stats-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.stats-filter {
+  background: var(--elev);
+  color: var(--text);
+  border: 2px solid var(--stroke);
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.stats-filter:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.stats-filter.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  background: var(--elev);
+  border: 2px solid var(--stroke);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-card.stat-success {
+  border-color: var(--success);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.stat-card.stat-danger {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.stat-card.stat-warning {
+  border-color: var(--warning);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stat-card.stat-success .stat-value {
+  color: var(--success);
+}
+
+.stat-card.stat-danger .stat-value {
+  color: var(--danger);
+}
+
+.stat-card.stat-warning .stat-value {
+  color: var(--warning);
+}
+
+/* Test Tools */
+.test-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 500px;
+}
+
+.ghost.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.ghost.danger:hover {
+  background: var(--danger);
+  color: #fff;
 }
 
 /* Loading states */
