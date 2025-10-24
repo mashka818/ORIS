@@ -230,69 +230,6 @@ AppDataSource.initialize().then(async () => {
     res.json({ total, attended, notAttended, pending });
   });
 
-  // Test: Delete all bookings
-  app.delete('/api/admin/test/delete-all', authMiddleware, async (req, res) => {
-    try {
-      await bookingRepo.clear();
-      res.json({ ok: true, message: 'All bookings deleted' });
-    } catch(err) {
-      console.error('Error deleting bookings:', err);
-      res.status(500).json({ error: 'Failed to delete bookings' });
-    }
-  });
-
-  // Test: Fill slot 9:00-9:30 on 23rd
-  app.post('/api/admin/test/fill-slot', authMiddleware, async (req, res) => {
-    const nextMonth = new Date();
-    nextMonth.setMonth(nextMonth.getMonth() + (nextMonth.getDate() > 23 ? 1 : 0));
-    const date = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-23`;
-    const time = '09:00';
-    
-    const clinics = await clinicRepo.find();
-    const names = ['Иван Иванов', 'Петр Петров', 'Мария Смирнова', 'Анна Кузнецова', 'Сергей Попов'];
-    
-    for(const clinic of clinics) {
-      for(let i = 0; i < 5; i++) {
-        await bookingRepo.save({
-          date,
-          time,
-          name: names[i % names.length],
-          phone: `+7 ${Math.floor(Math.random() * 900 + 100)} ${Math.floor(Math.random() * 900 + 100)}-${String(Math.floor(Math.random() * 90 + 10))}-${String(Math.floor(Math.random() * 90 + 10))}`,
-          clinicId: clinic.id,
-          status: 'pending'
-        });
-      }
-    }
-    
-    res.json({ ok: true, message: 'Slot 09:00-09:30 filled for all clinics' });
-  });
-
-  // Test: Fill all day
-  app.post('/api/admin/test/fill-day', authMiddleware, async (req, res) => {
-    const today = new Date().toISOString().split('T')[0];
-    const slots = generateSlots('09:00', '18:30', 30);
-    
-    const clinics = await clinicRepo.find();
-    const names = ['Иван Иванов', 'Петр Петров', 'Мария Смирнова', 'Анна Кузнецова', 'Сергей Попов'];
-    
-    for(const clinic of clinics) {
-      for(const time of slots) {
-        for(let i = 0; i < 5; i++) {
-          await bookingRepo.save({
-            date: today,
-            time,
-            name: names[i % names.length],
-            phone: `+7 ${Math.floor(Math.random() * 900 + 100)} ${Math.floor(Math.random() * 900 + 100)}-${String(Math.floor(Math.random() * 90 + 10))}-${String(Math.floor(Math.random() * 90 + 10))}`,
-            clinicId: clinic.id,
-            status: 'pending'
-          });
-        }
-      }
-    }
-    
-    res.json({ ok: true, message: 'All slots filled for today' });
-  });
-
   // no block endpoints — only capacity used
 
   // Fallback to index.html

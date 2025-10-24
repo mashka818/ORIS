@@ -21,6 +21,7 @@
               <div data-value="en">EN</div>
               <div data-value="uz">UZ</div>
               <div data-value="tj">TJ</div>
+              <div data-value="kg">KG</div>
             </div>
           </div>
           <label class="theme-switch" aria-label="Переключить тему">
@@ -111,7 +112,6 @@
         <div class="admin-tabs">
           <button class="admin-tab active" data-tab="bookings" data-i18n="bookings">Записи</button>
           <button class="admin-tab" data-tab="statistics" data-i18n="statistics">Статистика</button>
-          <button class="admin-tab" data-tab="test" data-i18n="testTools">Тестовые инструменты</button>
         </div>
 
         <!-- Bookings Tab -->
@@ -189,14 +189,6 @@
           </div>
         </div>
 
-        <!-- Test Tools Tab -->
-        <div id="tabTest" class="tab-content">
-          <div class="test-tools">
-            <button class="ghost danger" id="btnDeleteAll" data-i18n="deleteAll">Удалить все заявки</button>
-            <button class="ghost" id="btnFillSlot" data-i18n="fillSlot">Заполнить слот 9:00-9:30 23 числа</button>
-            <button class="ghost" id="btnFillDay" data-i18n="fillDay">Заполнить весь день</button>
-          </div>
-        </div>
       </section>
     </main>
 
@@ -214,7 +206,17 @@
           </div>
           <div class="input-row">
             <label for="password" data-i18n="password">Пароль</label>
-            <input id="password" name="password" type="password" placeholder="••••••••" required />
+            <div class="password-input-wrapper">
+              <input id="password" name="password" type="password" placeholder="••••••••" required />
+              <button type="button" id="togglePassword" class="toggle-password-btn" aria-label="Показать пароль">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle class="eye-open" cx="12" cy="12" r="3"></circle>
+                  <path class="eye-closed" style="display:none" d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line class="eye-closed" style="display:none" x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="error-msg" id="loginError"></div>
           <button class="primary" type="submit" data-i18n="login">Войти</button>

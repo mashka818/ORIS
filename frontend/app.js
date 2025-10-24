@@ -11,7 +11,7 @@
     statsClinicFilter: null,
     statsPeriod: 'all',
     lang: localStorage.getItem('lang') || 'ru',
-    theme: localStorage.getItem('theme') || 'light',
+    theme: 'light', // Всегда открывается светлая тема
     workday: { start: '09:00', end: '18:30' },
     availabilityCache: {},
     isAdmin: false,
@@ -21,7 +21,7 @@
   const i18n = {
     ru: { 
       day:'День', evening:'Вечер', formTitle:'Запись на прием', name:'Имя', phone:'Телефон', 
-      clinic:'Выберите клинику', selectClinic:'Выберите клинику',
+      clinic:'Выберите клинику', selectClinic:'Выберите клинику', clinicNotSelected:'Клиника не выбрана',
       noSlot:'Выберите дату и время', book:'Записаться', success:'Вы записаны на прием!', 
       booked:'Забронировано', months:['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'], 
       privacy:'Отправляя заявку, вы соглашаетесь с обработкой персональных данных', full:'Занято',
@@ -47,7 +47,6 @@
       selectDate: 'Выбрать дату',
       bookings: 'Записи',
       statistics: 'Статистика',
-      testTools: 'Тестовые инструменты',
       totalBookings: 'Всего записей',
       attendedCount: 'Пришли',
       notAttendedCount: 'Не пришли',
@@ -56,16 +55,11 @@
       filterWeek: 'Неделя',
       filterMonth: 'Месяц',
       filterYear: 'Год',
-      filterAll: 'Все время',
-      deleteAll: 'Удалить все заявки',
-      fillSlot: 'Заполнить слот 9:00-9:30 23 числа',
-      fillDay: 'Заполнить весь день',
-      confirmDelete: 'Вы уверены? Это удалит ВСЕ заявки!',
-      testSuccess: 'Операция выполнена успешно'
+      filterAll: 'Все время'
     },
     en: { 
       day:'Day', evening:'Evening', formTitle:'Book an appointment', name:'Name', phone:'Phone', 
-      clinic:'Select clinic', selectClinic:'Select clinic',
+      clinic:'Select clinic', selectClinic:'Select clinic', clinicNotSelected:'Clinic not selected',
       noSlot:'Select date and time', book:'Book', success:'You are booked for an appointment!', 
       booked:'Booked', months:['January','February','March','April','May','June','July','August','September','October','November','December'], 
       privacy:'By submitting you agree to the Privacy Policy', full:'Full',
@@ -91,7 +85,6 @@
       selectDate: 'Select date',
       bookings: 'Bookings',
       statistics: 'Statistics',
-      testTools: 'Test Tools',
       totalBookings: 'Total Bookings',
       attendedCount: 'Attended',
       notAttendedCount: 'Not Attended',
@@ -100,100 +93,121 @@
       filterWeek: 'Week',
       filterMonth: 'Month',
       filterYear: 'Year',
-      filterAll: 'All Time',
-      deleteAll: 'Delete all bookings',
-      fillSlot: 'Fill slot 9:00-9:30 on 23rd',
-      fillDay: 'Fill entire day',
-      confirmDelete: 'Are you sure? This will delete ALL bookings!',
-      testSuccess: 'Operation completed successfully'
+      filterAll: 'All Time'
     },
     uz: { 
       day:'Kun', evening:'Kechqurun', formTitle:'Qabulga yozilish', name:'Ism', phone:'Telefon', 
-      clinic:'Klinikani tanlang', selectClinic:'Klinikani tanlang',
+      clinic:'Klinikani tanlang', selectClinic:'Klinikani tanlang', clinicNotSelected:'Klinika tanlanmagan',
       noSlot:'Sana va vaqtni tanlang', book:'Yozilish', success:'Siz qabulga yozildingiz!', 
       booked:'Band qilingan', months:['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'], 
       privacy:'Arizani yuborish orqali siz shaxsiy ma\'lumotlarni qayta ishlashga rozilik bildirasiz', full:'Band',
       welcomeTitle: 'Xush kelibsiz!',
       welcomeText: 'Tibbiy ko\'rikdan o\'tish uchun yoziling',
       startBooking: 'Yozilishni boshlash',
-      adminLogin: 'Admin Login',
-      username: 'Username',
-      password: 'Password',
-      login: 'Login',
+      adminLogin: 'Admin paneliga kirish',
+      username: 'Login',
+      password: 'Parol',
+      login: 'Kirish',
       invalidName: 'Ism faqat harflardan iborat bo\'lishi kerak',
       invalidPhone: 'Telefon raqami noto\'g\'ri',
-      loginFailed: 'Invalid username or password',
+      loginFailed: 'Noto\'g\'ri login yoki parol',
       error: 'Xatolik',
       connectionError: 'Ulanish xatosi',
       validationError: 'Tekshirish xatosi',
-      emptyBookings: 'No bookings',
-      pending: 'Pending',
-      attended: 'Attended',
-      notAttended: 'Not Attended',
-      markAttended: 'Attended',
-      markNotAttended: 'Not Attended',
-      selectDate: 'Select date',
-      bookings: 'Bookings',
-      statistics: 'Statistics',
-      testTools: 'Test Tools',
-      totalBookings: 'Total Bookings',
-      attendedCount: 'Attended',
-      notAttendedCount: 'Not Attended',
-      pendingCount: 'Pending',
-      filterDay: 'Day',
-      filterWeek: 'Week',
-      filterMonth: 'Month',
-      filterYear: 'Year',
-      filterAll: 'All Time',
-      deleteAll: 'Delete all bookings',
-      fillSlot: 'Fill slot 9:00-9:30 on 23rd',
-      fillDay: 'Fill entire day',
-      confirmDelete: 'Are you sure? This will delete ALL bookings!',
-      testSuccess: 'Operation completed successfully'
+      emptyBookings: 'Arizalar yo\'q',
+      pending: 'Kutilmoqda',
+      attended: 'Keldi',
+      notAttended: 'Kelmadi',
+      markAttended: 'Keldi',
+      markNotAttended: 'Kelmadi',
+      selectDate: 'Sanani tanlang',
+      bookings: 'Arizalar',
+      statistics: 'Statistika',
+      totalBookings: 'Jami arizalar',
+      attendedCount: 'Kelganlar',
+      notAttendedCount: 'Kelmaganlar',
+      pendingCount: 'Kutilmoqda',
+      filterDay: 'Kun',
+      filterWeek: 'Hafta',
+      filterMonth: 'Oy',
+      filterYear: 'Yil',
+      filterAll: 'Barcha vaqt'
     },
     tj: { 
       day:'Рӯз', evening:'Бегоҳ', formTitle:'Ба қабул ном навис', name:'Ном', phone:'Телефон', 
-      clinic:'Клиниканро интихоб кунед', selectClinic:'Клиниканро интихоб кунед',
+      clinic:'Клиниканро интихоб кунед', selectClinic:'Клиниканро интихоб кунед', clinicNotSelected:'Клиника интихоб нашудааст',
       noSlot:'Сана ва вақтро интихоб кунед', book:'Ном навис', success:'Шумо ба қабул ном навишта шудед!', 
       booked:'Банд', months:['Январ','Феврал','Март','Апрел','Май','Июн','Июл','Август','Сентябр','Октябр','Ноябр','Декабр'], 
       privacy:'Бо фиристодани дархост шумо розӣ мешавед, ки маълумоти шахсии худро коркард кунед', full:'Банд',
       welcomeTitle: 'Хуш омадед!',
       welcomeText: 'Барои санҷиши тиббӣ ном нависед',
       startBooking: 'Ном нависиро оғоз кунед',
-      adminLogin: 'Admin Login',
-      username: 'Username',
-      password: 'Password',
-      login: 'Login',
+      adminLogin: 'Воридшавӣ ба панели админ',
+      username: 'Логин',
+      password: 'Рамз',
+      login: 'Ворид шудан',
       invalidName: 'Ном бояд танҳо аз ҳарфҳо иборат бошад',
       invalidPhone: 'Рақами телефон нодуруст аст',
-      loginFailed: 'Invalid username or password',
+      loginFailed: 'Логин ё рамз нодуруст аст',
       error: 'Хатогӣ',
       connectionError: 'Хатогии алоқа',
       validationError: 'Хатогии тафтиш',
-      emptyBookings: 'No bookings',
-      pending: 'Pending',
-      attended: 'Attended',
-      notAttended: 'Not Attended',
-      markAttended: 'Attended',
-      markNotAttended: 'Not Attended',
-      selectDate: 'Select date',
-      bookings: 'Bookings',
-      statistics: 'Statistics',
-      testTools: 'Test Tools',
-      totalBookings: 'Total Bookings',
-      attendedCount: 'Attended',
-      notAttendedCount: 'Not Attended',
-      pendingCount: 'Pending',
-      filterDay: 'Day',
-      filterWeek: 'Week',
-      filterMonth: 'Month',
-      filterYear: 'Year',
-      filterAll: 'All Time',
-      deleteAll: 'Delete all bookings',
-      fillSlot: 'Fill slot 9:00-9:30 on 23rd',
-      fillDay: 'Fill entire day',
-      confirmDelete: 'Are you sure? This will delete ALL bookings!',
-      testSuccess: 'Operation completed successfully'
+      emptyBookings: 'Дархостҳо нестанд',
+      pending: 'Интизор',
+      attended: 'Омад',
+      notAttended: 'Наомад',
+      markAttended: 'Омад',
+      markNotAttended: 'Наомад',
+      selectDate: 'Интихоби сана',
+      bookings: 'Дархостҳо',
+      statistics: 'Омор',
+      totalBookings: 'Ҳамаги дархостҳо',
+      attendedCount: 'Омаданд',
+      notAttendedCount: 'Наомаданд',
+      pendingCount: 'Интизоранд',
+      filterDay: 'Рӯз',
+      filterWeek: 'Ҳафта',
+      filterMonth: 'Моҳ',
+      filterYear: 'Сол',
+      filterAll: 'Ҳамаи вақт'
+    },
+    kg: { 
+      day:'Күндүз', evening:'Кеч', formTitle:'Кабылга жазылуу', name:'Аты-жөнү', phone:'Телефон', 
+      clinic:'Клиниканы тандаңыз', selectClinic:'Клиниканы тандаңыз', clinicNotSelected:'Клиника тандалган эмес',
+      noSlot:'Датаны жана убакытты тандаңыз', book:'Жазылуу', success:'Сиз кабылга жазылдыңыз!', 
+      booked:'Брондолгон', months:['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'], 
+      privacy:'Арызды жөнөтүү менен сиз жеке маалыматтарды иштетүүгө макул болосуз', full:'Бош эмес',
+      welcomeTitle: 'Кош келиңиз!',
+      welcomeText: 'Медициналык кароодон өтүү үчүн жазылыңыз',
+      startBooking: 'Жазылууну баштоо',
+      adminLogin: 'Админ панелине кирүү',
+      username: 'Логин',
+      password: 'Сыр сөз',
+      login: 'Кирүү',
+      invalidName: 'Аты-жөнү тамгалардан гана турушу керек',
+      invalidPhone: 'Туура эмес телефон номери',
+      loginFailed: 'Туура эмес логин же сыр сөз',
+      error: 'Ката',
+      connectionError: 'Байланыш катасы',
+      validationError: 'Текшерүү катасы',
+      emptyBookings: 'Арыздар жок',
+      pending: 'Күтүүдө',
+      attended: 'Келди',
+      notAttended: 'Келген жок',
+      markAttended: 'Келди',
+      markNotAttended: 'Келген жок',
+      selectDate: 'Датаны тандоо',
+      bookings: 'Арыздар',
+      statistics: 'Статистика',
+      totalBookings: 'Бардык арыздар',
+      attendedCount: 'Келишти',
+      notAttendedCount: 'Келишкен жок',
+      pendingCount: 'Күтүүдө',
+      filterDay: 'Күн',
+      filterWeek: 'Апта',
+      filterMonth: 'Ай',
+      filterYear: 'Жыл',
+      filterAll: 'Бардык убакыт'
     }
   };
 
@@ -216,6 +230,7 @@
     toast: document.getElementById('toast'), 
     customClinicSelect: document.getElementById('customClinicSelect'),
     clinicSelectItems: document.getElementById('clinicSelectItems'),
+    clinicError: document.getElementById('clinicError'),
     nameInput: document.getElementById('name'),
     phoneInput: document.getElementById('phone'),
     nameError: document.getElementById('nameError'),
@@ -248,7 +263,7 @@
     const options = items.querySelectorAll('div');
     
     // Update selected text based on current language
-    const langMap = { ru: 'RU', en: 'EN', uz: 'UZ', tj: 'TJ' };
+    const langMap = { ru: 'RU', en: 'EN', uz: 'UZ', tj: 'TJ', kg: 'KG' };
     selected.textContent = langMap[state.lang] || 'RU';
     
     selected.addEventListener('click', function(e) {
@@ -278,8 +293,8 @@
           }
           // Update date picker text
           const dateText = document.getElementById('dateText');
-          if(dateText && dateText.textContent !== 'Выбрать дату' && dateText.textContent !== 'Select date') {
-            dateText.textContent = state.lang === 'ru' ? 'Выбрать дату' : 'Select date';
+          if(dateText && dateText.textContent !== i18n[state.lang].selectDate) {
+            dateText.textContent = i18n[state.lang].selectDate;
           }
         }
       });
@@ -427,7 +442,7 @@
         // Update display text
         const dateText = document.getElementById('dateText');
         const date = new Date(dateISO + 'T00:00:00');
-        const localeMap = { ru: 'ru-RU', en: 'en-GB', uz: 'uz-UZ', tj: 'ru-RU' };
+        const localeMap = { ru: 'ru-RU', en: 'en-GB', uz: 'uz-UZ', tj: 'ru-RU', kg: 'ru-RU' };
         const formatted = date.toLocaleDateString(localeMap[state.lang] || 'ru-RU', {
           day: '2-digit',
           month: '2-digit',
@@ -589,6 +604,12 @@
         state.selectedClinicId = Number(clinicId);
         state.availabilityCache = {};
         
+        // Clear clinic validation error
+        if(elements.clinicError) {
+          elements.clinicError.textContent = '';
+        }
+        elements.customClinicSelect.classList.remove('error');
+        
         // Preload month availability to show full days in calendar
         await preloadMonthAvailability();
         
@@ -602,12 +623,15 @@
   }
 
   function init(){
+    // Удаляем сохраненную тему, чтобы всегда открывалась светлая
+    localStorage.removeItem('theme');
+    
     applyTheme(state.theme); 
     applyLang(state.lang);
     
-    // Set initial theme toggle state
+    // Set initial theme toggle state (всегда false для светлой темы)
     if(elements.themeToggle) {
-      elements.themeToggle.checked = state.theme === 'dark';
+      elements.themeToggle.checked = false;
     }
     
     // Initialize custom select
@@ -634,6 +658,30 @@
     elements.loginModal.addEventListener('click', (e) => {
       if(e.target === elements.loginModal) closeLoginModal();
     });
+    
+    // Toggle password visibility
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    if(togglePasswordBtn && passwordInput) {
+      togglePasswordBtn.addEventListener('click', () => {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        // Toggle SVG icons
+        const eyeOpen = togglePasswordBtn.querySelectorAll('.eye-open');
+        const eyeClosed = togglePasswordBtn.querySelectorAll('.eye-closed');
+        
+        if(type === 'password') {
+          eyeOpen.forEach(el => el.style.display = '');
+          eyeClosed.forEach(el => el.style.display = 'none');
+          togglePasswordBtn.setAttribute('aria-label', 'Показать пароль');
+        } else {
+          eyeOpen.forEach(el => el.style.display = 'none');
+          eyeClosed.forEach(el => el.style.display = '');
+          togglePasswordBtn.setAttribute('aria-label', 'Скрыть пароль');
+        }
+      });
+    }
     
     elements.prevMonth.addEventListener('click', async () => await changeMonth(-1));
     elements.nextMonth.addEventListener('click', async () => await changeMonth(1));
@@ -677,14 +725,6 @@
         loadStatistics(filter.getAttribute('data-period'));
       });
     });
-
-    // Test buttons
-    const btnDeleteAll = document.getElementById('btnDeleteAll');
-    const btnFillSlot = document.getElementById('btnFillSlot');
-    const btnFillDay = document.getElementById('btnFillDay');
-    if(btnDeleteAll) btnDeleteAll.addEventListener('click', deleteAllBookings);
-    if(btnFillSlot) btnFillSlot.addEventListener('click', fillSlot);
-    if(btnFillDay) btnFillDay.addEventListener('click', fillDay);
     
     renderCalendar();
     renderSlots();
@@ -898,52 +938,6 @@
     }
   }
 
-  // Test functions
-  async function deleteAllBookings() {
-    if(!confirm(i18n[state.lang].confirmDelete)) return;
-    try {
-      const res = await fetch('/api/admin/test/delete-all', { 
-        method: 'DELETE', 
-        headers: authHeader()
-      });
-      if(res.ok) {
-        showToast(i18n[state.lang].testSuccess);
-        loadBookings();
-      }
-    } catch(err) {
-      showToast(i18n[state.lang].connectionError);
-    }
-  }
-
-  async function fillSlot() {
-    try {
-      const res = await fetch('/api/admin/test/fill-slot', { 
-        method: 'POST', 
-        headers: authHeader()
-      });
-      if(res.ok) {
-        showToast(i18n[state.lang].testSuccess);
-      }
-    } catch(err) {
-      showToast(i18n[state.lang].connectionError);
-    }
-  }
-
-  async function fillDay() {
-    try {
-      const res = await fetch('/api/admin/test/fill-day', { 
-        method: 'POST', 
-        headers: authHeader()
-      });
-      if(res.ok) {
-        showToast(i18n[state.lang].testSuccess);
-        loadBookings();
-      }
-    } catch(err) {
-      showToast(i18n[state.lang].connectionError);
-    }
-  }
-
   function validateName() {
     const value = elements.nameInput.value.trim();
     const isValid = /^[a-zA-Zа-яА-ЯёЁ\s\-']*$/.test(value);
@@ -1025,10 +1019,24 @@
     return isValid;
   }
 
+  function validateClinic() {
+    const isValid = !!state.selectedClinicId;
+    
+    if(!isValid) {
+      elements.clinicError.textContent = i18n[state.lang].clinicNotSelected;
+      elements.customClinicSelect.classList.add('error');
+    } else {
+      elements.clinicError.textContent = '';
+      elements.customClinicSelect.classList.remove('error');
+    }
+    
+    return isValid;
+  }
+
   
   function toggleTheme(e){ 
     state.theme = e.target.checked ? 'dark' : 'light'; 
-    localStorage.setItem('theme', state.theme); 
+    // Не сохраняем тему в localStorage - всегда открывается светлая
     applyTheme(state.theme); 
   }
   
@@ -1179,7 +1187,7 @@
   function updateSelectedLabel(){ 
     if(state.selectedDateISO && state.selectedTime){ 
       const d = new Date(state.selectedDateISO); 
-      const localeMap = { ru: 'ru-RU', en: 'en-GB', uz: 'uz-UZ', tj: 'ru-RU' };
+      const localeMap = { ru: 'ru-RU', en: 'en-GB', uz: 'uz-UZ', tj: 'ru-RU', kg: 'ru-RU' };
       const fmt = d.toLocaleDateString(localeMap[state.lang] || 'ru-RU',{ day:'2-digit', month:'2-digit', year:'numeric' }); 
       const timeRange = getTimeRange(state.selectedTime);
       elements.selectedSlot.textContent = `${fmt} • ${timeRange}`; 
@@ -1193,6 +1201,12 @@
 
   async function onSubmit(e){ 
     e.preventDefault(); 
+    
+    // Validate clinic first
+    if(!validateClinic()) {
+      showToast(i18n[state.lang].clinicNotSelected);
+      return;
+    }
     
     if(!state.selectedDateISO || !state.selectedTime || !state.selectedClinicId) return; 
     
