@@ -15,16 +15,46 @@ function generateBookingPDF(booking, clinic) {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      // Register Arial font for Cyrillic support
-      const arialPath = 'C:\\Windows\\Fonts\\arial.ttf';
-      const arialBoldPath = 'C:\\Windows\\Fonts\\arialbd.ttf';
+      // Register Arial font for Cyrillic support (try multiple paths for cross-platform)
+      const fontPaths = [
+        // Windows
+        { regular: 'C:\\Windows\\Fonts\\arial.ttf', bold: 'C:\\Windows\\Fonts\\arialbd.ttf' },
+        // Linux
+        { regular: '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf', bold: '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf' },
+        { regular: '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', bold: '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' },
+        // macOS
+        { regular: '/System/Library/Fonts/Supplemental/Arial.ttf', bold: '/System/Library/Fonts/Supplemental/Arial Bold.ttf' },
+        { regular: '/Library/Fonts/Arial.ttf', bold: '/Library/Fonts/Arial Bold.ttf' }
+      ];
       
-      if (fs.existsSync(arialPath)) {
-        doc.registerFont('Arial', arialPath);
+      let fontRegistered = false;
+      for (const fontPath of fontPaths) {
+        if (fs.existsSync(fontPath.regular) && fs.existsSync(fontPath.bold)) {
+          try {
+            doc.registerFont('Arial', fontPath.regular);
+            doc.registerFont('Arial-Bold', fontPath.bold);
+            fontRegistered = true;
+            console.log('Registered fonts:', fontPath.regular);
+            break;
+          } catch (err) {
+            console.warn('Failed to register font:', err.message);
+          }
+        }
       }
-      if (fs.existsSync(arialBoldPath)) {
-        doc.registerFont('Arial-Bold', arialBoldPath);
+      
+      // If no system fonts found, use PDFKit built-in fonts (they support basic Cyrillic)
+      if (!fontRegistered) {
+        console.warn('No Arial fonts found, using Helvetica (limited Cyrillic support)');
       }
+      
+      // Helper function to use correct font
+      const useFont = (isBold = false) => {
+        if (fontRegistered) {
+          return isBold ? 'Arial-Bold' : 'Arial';
+        } else {
+          return isBold ? 'Helvetica-Bold' : 'Helvetica';
+        }
+      };
 
       // Header with ORIS logo (as in logo.svg)
       const logoX = 50;
@@ -42,7 +72,7 @@ function generateBookingPDF(booking, clinic) {
       doc.save();
       doc.fontSize(7)
          .fillColor('#ffffff')
-         .font('Arial');
+         .font(useFont());
       
       // Position text on top arc of circle
       const textY = centerY - logoSize/2 + 12;
@@ -70,19 +100,19 @@ function generateBookingPDF(booking, clinic) {
       // ORIS text (big, next to logo)
       doc.fontSize(28)
          .fillColor('#001051')
-         .font('Arial-Bold')
+         .font(useFont(true))
          .text('ОРИС', 140, 50);
       
       // Clinic name (Сеть клиник) - small text under ORIS
       doc.fontSize(10)
          .fillColor('#6b7280')
-         .font('Arial')
+         .font(useFont())
          .text(clinic.name, 140, 82);
 
       // Booking number
       doc.fontSize(14)
          .fillColor('#1e40af')
-         .font('Arial-Bold')
+         .font(useFont(true))
          .text(`Заявка №${booking.id}`, 400, 60, { align: 'right' });
 
       // Line
@@ -95,7 +125,7 @@ function generateBookingPDF(booking, clinic) {
       // Title
       doc.fontSize(26)
          .fillColor('#1e40af')
-         .font('Arial-Bold')
+         .font(useFont(true))
          .text('ПОДТВЕРЖДЕНИЕ ЗАПИСИ', 50, 165, { align: 'center' });
 
       // Success checkmark
@@ -121,55 +151,55 @@ function generateBookingPDF(booking, clinic) {
       // Clinic
       doc.fontSize(10)
          .fillColor('#6b7280')
-         .font('Arial')
+         .font(useFont())
          .text('КЛИНИКА:', 100, yPos);
       
       doc.fontSize(15)
          .fillColor('#1f2937')
-         .font('Arial-Bold')
+         .font(useFont(true))
          .text(clinic.name, 100, yPos + 18);
 
       // Patient
       yPos += spacing;
       doc.fontSize(10)
          .fillColor('#6b7280')
-         .font('Arial')
+         .font(useFont())
          .text('ПАЦИЕНТ:', 100, yPos);
       
       doc.fontSize(15)
          .fillColor('#1f2937')
-         .font('Arial-Bold')
+         .font(useFont(true))
          .text(booking.name, 100, yPos + 18);
 
       // Phone
       yPos += spacing;
       doc.fontSize(10)
          .fillColor('#6b7280')
-         .font('Arial')
+         .font(useFont())
          .text('ТЕЛЕФОН:', 100, yPos);
       
       doc.fontSize(15)
          .fillColor('#1f2937')
-         .font('Arial-Bold')
+         .font(useFont(true))
          .text(booking.phone, 100, yPos + 18);
 
       // Date
       yPos += spacing;
       doc.fontSize(10)
          .fillColor('#6b7280')
-         .font('Arial')
+         .font(useFont())
          .text('ДАТА:', 100, yPos);
       
       doc.fontSize(15)
          .fillColor('#1f2937')
-         .font('Arial-Bold')
+         .font(useFont(true))
          .text(booking.date, 100, yPos + 18);
 
       // Time
       yPos += spacing;
       doc.fontSize(10)
          .fillColor('#6b7280')
-         .font('Arial')
+         .font(useFont())
          .text('ВРЕМЯ:', 100, yPos);
       
       const [startH, startM] = booking.time.split(':').map(Number);
@@ -180,7 +210,7 @@ function generateBookingPDF(booking, clinic) {
       
       doc.fontSize(15)
          .fillColor('#1f2937')
-         .font('Arial-Bold')
+         .font(useFont(true))
          .text(timeRange, 100, yPos + 18);
 
       // Important notice
@@ -191,12 +221,12 @@ function generateBookingPDF(booking, clinic) {
       
       doc.fontSize(11)
          .fillColor('#1e40af')
-         .font('Arial-Bold')
+         .font(useFont(true))
          .text('ВАЖНО:', 90, yPos + 20);
       
       doc.fontSize(10)
          .fillColor('#1f2937')
-         .font('Arial')
+         .font(useFont())
          .text('Пожалуйста, приходите за 10 минут до назначенного времени.', 90, yPos + 45, { width: 415 })
          .text('Пожалуйста, возьмите с собой удостоверение личности.', 90, yPos + 70, { width: 415 });
 
@@ -205,7 +235,7 @@ function generateBookingPDF(booking, clinic) {
       
       doc.fontSize(9)
          .fillColor('#9ca3af')
-         .font('Arial')
+         .font(useFont())
          .text('Данный документ подтверждает вашу запись на прием.', 50, footerY, { 
            align: 'center',
            width: 495
@@ -214,7 +244,7 @@ function generateBookingPDF(booking, clinic) {
       const now = new Date();
       doc.fontSize(8)
          .fillColor('#9ca3af')
-         .font('Arial')
+         .font(useFont())
          .text(`Создан: ${now.toLocaleDateString('ru-RU')} ${now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`, 50, footerY + 16, { 
            align: 'center',
            width: 495

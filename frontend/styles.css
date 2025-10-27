@@ -158,6 +158,11 @@ html.light .app-header {
   position: relative;
   display: inline-block;
   cursor: pointer;
+  /* ============================================
+     ВРЕМЕННОЕ СКРЫТИЕ ПЕРЕКЛЮЧАТЕЛЯ ТЕМЫ
+     Чтобы вернуть обратно - удалите строку ниже
+     ============================================ */
+  display: none !important;
 }
 
 .theme-switch input {
