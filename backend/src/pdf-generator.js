@@ -15,14 +15,22 @@ function generateBookingPDF(booking, clinic) {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      // Register Arial font for Cyrillic support (try multiple paths for cross-platform)
+      // Register Arial font for Cyrillic support
+      // First try to load fonts from project directory (works everywhere)
+      const projectFontsPath = path.join(__dirname, '..', 'fonts');
       const fontPaths = [
-        // Windows
+        // Project fonts (highest priority - works on any platform)
+        { 
+          regular: path.join(projectFontsPath, 'arial.ttf'), 
+          bold: path.join(projectFontsPath, 'arialbd.ttf') 
+        },
+        // Windows system fonts
         { regular: 'C:\\Windows\\Fonts\\arial.ttf', bold: 'C:\\Windows\\Fonts\\arialbd.ttf' },
-        // Linux
+        // Linux system fonts
         { regular: '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf', bold: '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf' },
         { regular: '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', bold: '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' },
-        // macOS
+        { regular: '/usr/share/fonts/truetype/msttcorefonts/arial.ttf', bold: '/usr/share/fonts/truetype/msttcorefonts/arialbd.ttf' },
+        // macOS system fonts
         { regular: '/System/Library/Fonts/Supplemental/Arial.ttf', bold: '/System/Library/Fonts/Supplemental/Arial Bold.ttf' },
         { regular: '/Library/Fonts/Arial.ttf', bold: '/Library/Fonts/Arial Bold.ttf' }
       ];
@@ -34,26 +42,22 @@ function generateBookingPDF(booking, clinic) {
             doc.registerFont('Arial', fontPath.regular);
             doc.registerFont('Arial-Bold', fontPath.bold);
             fontRegistered = true;
-            console.log('Registered fonts:', fontPath.regular);
+            console.log('✓ Registered fonts:', fontPath.regular);
             break;
           } catch (err) {
-            console.warn('Failed to register font:', err.message);
+            console.warn('⚠ Failed to register font:', err.message);
           }
         }
       }
       
-      // If no system fonts found, use PDFKit built-in fonts (they support basic Cyrillic)
+      // If no fonts found, throw error (Helvetica doesn't support Cyrillic properly)
       if (!fontRegistered) {
-        console.warn('No Arial fonts found, using Helvetica (limited Cyrillic support)');
+        throw new Error('No fonts with Cyrillic support found! Please ensure Arial fonts are available in backend/fonts/ directory.');
       }
       
       // Helper function to use correct font
       const useFont = (isBold = false) => {
-        if (fontRegistered) {
-          return isBold ? 'Arial-Bold' : 'Arial';
-        } else {
-          return isBold ? 'Helvetica-Bold' : 'Helvetica';
-        }
+        return isBold ? 'Arial-Bold' : 'Arial';
       };
 
       // Header with ORIS logo (as in logo.svg)
